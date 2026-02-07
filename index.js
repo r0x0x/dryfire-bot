@@ -2,13 +2,15 @@ import { Client, GatewayIntentBits } from "discord.js";
 import dotenv from "dotenv";
 import db from "./db.js";
 import { updateStreak, getStreak } from "./streaks.js";
+import "./dashboard.js";
+
 dotenv.config();
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.DirectMessages]
 });
 
-client.once("ready", () => {
+client.once("clientReady", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
@@ -19,48 +21,67 @@ client.on("interactionCreate", async interaction => {
 
   // /dryfired
   if (interaction.commandName === "dryfired") {
-    const title = interaction.options.getString("title");
-    const description = interaction.options.getString("description");
+  const title = interaction.options.getString("title");
+  const description = interaction.options.getString("description");
 
-    const count = db.prepare("SELECT COUNT(*) AS c FROM sessions WHERE userId = ?").get(userId).c;
-    const sessionNumber = count + 1;
-    const timestamp = Date.now();
+  const count = db.prepare("SELECT COUNT(*) AS c FROM sessions WHERE userId = ?").get(userId).c;
+  const sessionNumber = count + 1;
+  const timestamp = Date.now();
 
-    db.prepare(`
-      INSERT INTO sessions (userId, sessionNumber, title, description, timestamp)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(userId, sessionNumber, title, description, timestamp);
+  db.prepare(`
+    INSERT INTO sessions (userId, sessionNumber, title, description, timestamp)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(userId, sessionNumber, title, description, timestamp);
 
-    const streak = updateStreak(userId);
+  const streak = updateStreak(userId);
 
-    return interaction.reply(
-      `Logged **DF Session ${sessionNumber}**\nStreak: **${streak} days**`
-    );
-  }
+  return interaction.reply({
+    content:
+      `**Dry Fire Session Logged**\n` +
+      `**Session:** ${sessionNumber}\n` +
+      `**Date:** ${new Date(timestamp).toLocaleString()}\n` +
+      `**Title:** ${title}\n` +
+      `**Description:** ${description}\n\n` +
+      `🔥 **Current Streak:** ${streak} days`,
+  });
+}
+
 
   // /editdf
   if (interaction.commandName === "editdf") {
-    const sessionNumber = interaction.options.getInteger("sessionnumber");
-    const newTitle = interaction.options.getString("title");
-    const newDescription = interaction.options.getString("description");
+  const sessionNumber = interaction.options.getInteger("sessionnumber");
+  const newTitle = interaction.options.getString("title");
+  const newDescription = interaction.options.getString("description");
 
-    const row = db.prepare(`
-      SELECT * FROM sessions WHERE userId = ? AND sessionNumber = ?
-    `).get(userId, sessionNumber);
+  const row = db.prepare(`
+    SELECT * FROM sessions WHERE userId = ? AND sessionNumber = ?
+  `).get(userId, sessionNumber);
 
-    if (!row) {
-      return interaction.reply({ content: "Session not found.", ephemeral: true });
-    }
-
-    db.prepare(`
-      UPDATE sessions
-      SET title = COALESCE(?, title),
-          description = COALESCE(?, description)
-      WHERE userId = ? AND sessionNumber = ?
-    `).run(newTitle, newDescription, userId, sessionNumber);
-
-    return interaction.reply(`Updated DF Session ${sessionNumber}.`);
+  if (!row) {
+    return interaction.reply({ content: "Session not found.", ephemeral: true });
   }
+
+  db.prepare(`
+    UPDATE sessions
+    SET title = COALESCE(?, title),
+        description = COALESCE(?, description)
+    WHERE userId = ? AND sessionNumber = ?
+  `).run(newTitle, newDescription, userId, sessionNumber);
+
+  const updated = db.prepare(`
+    SELECT * FROM sessions WHERE userId = ? AND sessionNumber = ?
+  `).get(userId, sessionNumber);
+
+  return interaction.reply({
+    content:
+      `**Dry Fire Session Updated**\n` +
+      `**Session:** ${updated.sessionNumber}\n` +
+      `**Date:** ${new Date(updated.timestamp).toLocaleString()}\n` +
+      `**Title:** ${updated.title}\n` +
+      `**Description:** ${updated.description}`,
+  });
+}
+
 
   // /listdryfiresessions
   if (interaction.commandName === "listdryfiresessions") {
