@@ -11,10 +11,6 @@ CREATE TABLE IF NOT EXISTS sessions (
   duration TEXT,
   timestamp INTEGER
 );
-// Add duration column if missing
-try {
-  db.prepare("ALTER TABLE sessions ADD COLUMN duration TEXT").run();
-} catch {}
 
 CREATE TABLE IF NOT EXISTS streaks (
   userId TEXT PRIMARY KEY,
@@ -22,5 +18,10 @@ CREATE TABLE IF NOT EXISTS streaks (
   lastSessionDate TEXT
 );
 `);
+
+// Add duration column if missing
+try {
+  db.prepare("ALTER TABLE sessions ADD COLUMN duration TEXT").run();
+} catch {}
 
 export default db;
