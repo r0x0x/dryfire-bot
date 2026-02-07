@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dry Fire Leaderboard</title>
+</head>
+<body>
+  <h1>Top Streaks</h1>
+  <ol>
+    <% rows.forEach(r => { %>
+      <li>
+        <strong><%= r.streak %> days</strong> — User <%= r.userId %>
+      </li>
+    <% }) %>
+  </ol>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dry Fire Dashboard</title>
+</head>
+<body>
+  <h1>User <%= userId %></h1>
+  <h2>Streak: <%= streak %> days</h2>
+
+  <h3>Sessions</h3>
+  <ul>
+    <% sessions.forEach(s => { %>
+      <li>
+        <strong>DF Session <%= s.sessionNumber %></strong> —
+        <%= new Date(s.timestamp).toLocaleString() %><br>
+        <em><%= s.title %></em><br>
+        <%= s.description %>
+      </li>
+    <% }) %>
+  </ul>
+</body>
+</html>
