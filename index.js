@@ -1,8 +1,14 @@
+
 import { Client, GatewayIntentBits } from "discord.js";
 import dotenv from "dotenv";
 import db from "./db.js";
 import { updateStreak, getStreak } from "./streaks.js";
 import "./dashboard.js";
+	function formatPST(timestamp) {
+		return new Date(timestamp).toLocaleString("en-US", {
+		timeZone: "America/Los_Angeles",
+		});
+	}
 
 dotenv.config();
 
@@ -23,15 +29,16 @@ client.on("interactionCreate", async interaction => {
   if (interaction.commandName === "dryfired") {
   const title = interaction.options.getString("title");
   const description = interaction.options.getString("description");
+  const duration = interaction.options.getString("duration") || "Not specified";
 
   const count = db.prepare("SELECT COUNT(*) AS c FROM sessions WHERE userId = ?").get(userId).c;
   const sessionNumber = count + 1;
   const timestamp = Date.now();
 
   db.prepare(`
-    INSERT INTO sessions (userId, sessionNumber, title, description, timestamp)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(userId, sessionNumber, title, description, timestamp);
+    INSERT INTO sessions (userId, sessionNumber, title, description, duration, timestamp)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(userId, sessionNumber, title, description, duration, timestamp);
 
   const streak = updateStreak(userId);
 
@@ -39,12 +46,14 @@ client.on("interactionCreate", async interaction => {
     content:
       `**Dry Fire Session Logged**\n` +
       `**Session:** ${sessionNumber}\n` +
-      `**Date:** ${new Date(timestamp).toLocaleString()}\n` +
+      `**Date:** ${formatPST(timestamp)}\n` +
       `**Title:** ${title}\n` +
-      `**Description:** ${description}\n\n` +
+      `**Description:** ${description}\n` +
+      `**Duration:** ${duration}\n\n` +
       `🔥 **Current Streak:** ${streak} days`,
   });
 }
+
 
 
   // /editdf
@@ -52,6 +61,7 @@ client.on("interactionCreate", async interaction => {
   const sessionNumber = interaction.options.getInteger("sessionnumber");
   const newTitle = interaction.options.getString("title");
   const newDescription = interaction.options.getString("description");
+  const newDuration = interaction.options.getString("duration");
 
   const row = db.prepare(`
     SELECT * FROM sessions WHERE userId = ? AND sessionNumber = ?
@@ -64,9 +74,10 @@ client.on("interactionCreate", async interaction => {
   db.prepare(`
     UPDATE sessions
     SET title = COALESCE(?, title),
-        description = COALESCE(?, description)
+        description = COALESCE(?, description),
+        duration = COALESCE(?, duration)
     WHERE userId = ? AND sessionNumber = ?
-  `).run(newTitle, newDescription, userId, sessionNumber);
+  `).run(newTitle, newDescription, newDuration, userId, sessionNumber);
 
   const updated = db.prepare(`
     SELECT * FROM sessions WHERE userId = ? AND sessionNumber = ?
@@ -76,11 +87,13 @@ client.on("interactionCreate", async interaction => {
     content:
       `**Dry Fire Session Updated**\n` +
       `**Session:** ${updated.sessionNumber}\n` +
-      `**Date:** ${new Date(updated.timestamp).toLocaleString()}\n` +
+      `**Date:** ${formatPST(updated.timestamp)}\n` +
       `**Title:** ${updated.title}\n` +
-      `**Description:** ${updated.description}`,
+      `**Description:** ${updated.description}\n` +
+      `**Duration:** ${updated.duration}`,
   });
 }
+
 
 
   // /listdryfiresessions
@@ -97,9 +110,11 @@ client.on("interactionCreate", async interaction => {
 
     const lines = sessions.map(s => {
       const date = new Date(s.timestamp);
-      return `**DF Session ${s.sessionNumber}:** ${date.toLocaleString()}\n` +
-             `• ${s.title}\n` +
-             `• ${s.description}\n`;
+      return `**DF Session ${s.sessionNumber}:** ${formatPST(s.timestamp)}\n` +
+       `• ${s.title}\n` +
+       `• ${s.description}\n` +
+       `• Duration: ${s.duration}\n`;
+
     });
 
     try {

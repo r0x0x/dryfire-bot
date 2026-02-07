@@ -4,27 +4,34 @@ dotenv.config();
 
 const commands = [
   new SlashCommandBuilder()
-    .setName("dryfired")
-    .setDescription("Log a new dry fire session")
-    .addStringOption(opt =>
-      opt.setName("title").setDescription("Title").setRequired(true)
-    )
-    .addStringOption(opt =>
-      opt.setName("description").setDescription("Description").setRequired(true)
-    ),
+  .setName("dryfired")
+  .setDescription("Log a new dry fire session")
+  .addStringOption(opt =>
+    opt.setName("title").setDescription("Title").setRequired(true)
+  )
+  .addStringOption(opt =>
+    opt.setName("description").setDescription("Description").setRequired(true)
+  )
+  .addStringOption(opt =>
+    opt.setName("duration").setDescription("How long you trained (e.g., 15 min)")
+  ),
 
-  new SlashCommandBuilder()
-    .setName("editdf")
-    .setDescription("Edit a dry fire session")
-    .addIntegerOption(opt =>
-      opt.setName("sessionnumber").setDescription("Session number").setRequired(true)
-    )
-    .addStringOption(opt =>
-      opt.setName("title").setDescription("New title")
-    )
-    .addStringOption(opt =>
-      opt.setName("description").setDescription("New description")
-    ),
+new SlashCommandBuilder()
+  .setName("editdf")
+  .setDescription("Edit a dry fire session")
+  .addIntegerOption(opt =>
+    opt.setName("sessionnumber").setDescription("Session number").setRequired(true)
+  )
+  .addStringOption(opt =>
+    opt.setName("title").setDescription("New title")
+  )
+  .addStringOption(opt =>
+    opt.setName("description").setDescription("New description")
+  )
+  .addStringOption(opt =>
+    opt.setName("duration").setDescription("New duration")
+  ),
+
 
   new SlashCommandBuilder()
     .setName("listdryfiresessions")

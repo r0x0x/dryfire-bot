@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   sessionNumber INTEGER,
   title TEXT,
   description TEXT,
+  duration TEXT,
   timestamp INTEGER
 );
 
